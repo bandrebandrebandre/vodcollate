@@ -14,12 +14,12 @@ def align(dir): # should be at least two files
     fns = os.listdir(dir)
     parsed_result = {}
     for fn in fns:
-        if (fn != 'total.wav') and (fn != '.DS_Store'):
+        if (fn != 'total.wav') and (fn != '.DS_Store') and os.path.isfile(dir + '/' + fn):
             parsed_result[fn] = result[fn]
     return parsed_result
 
 
-def trim(video, timecode):
+def front_trim(video, timecode):
     video_fn = video.split('/')[-1]
     args = [
     'ffmpeg',
@@ -37,7 +37,10 @@ def trim(video, timecode):
 def collate(dir):
     offset = align(dir)
     print(str(offset))
-    #trim(
+    os.mkdir(dir + '/trim')
+    contents = [f for f in os.listdir(dir) if (os.path.isfile(dir + '/' + f) and f != '.DS_Store')]
+    print("HELLOOOOO")
+    print(contents)
 
 if __name__ == "__main__":
     collate(sys.argv[1])
