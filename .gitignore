@@ -1,3 +1,7 @@
+content
+old
+.DS_Store
+*.swp
 bin/
 pyvenv.cfg
 share/
