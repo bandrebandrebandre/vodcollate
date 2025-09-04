@@ -46,17 +46,14 @@ def collate(dir):
             largest_offset = offsets[fn]
 
     contents = [dir + '/' + f for f in os.listdir(dir) if (os.path.isfile(dir + '/' + f) and f != '.DS_Store')]
-    print("HELLOLHELLLO")
-    print(contents)
 
-    print("BYEBYE")
     for c in contents:
         fn = c.split('/')[-1]
         trim_timecode = largest_offset - offsets[fn]
         front_trim(c, dir + '/trim/' + fn, trim_timecode)
 
+    front_trim(dir + '/audalign/total.wav', dir + '/trim/syncced_total.wav', largest_offset)
 
-    print("HELLOOOOO")
 
 if __name__ == "__main__":
     collate(sys.argv[1])
