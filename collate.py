@@ -1,6 +1,7 @@
 import audalign as ad
 import sys
 import os
+import subprocess
 
 def align(dir): # should be at least two files
     fingerprint_rec = ad.FingerprintRecognizer()
@@ -19,28 +20,43 @@ def align(dir): # should be at least two files
     return parsed_result
 
 
-def front_trim(video, timecode):
-    video_fn = video.split('/')[-1]
+def front_trim(video_path, output_path, timecode):
     args = [
     'ffmpeg',
     '-y',
     '-ss',
     str(timecode),
     '-i',
-    AV_filepath,
+    video_path,
     '-c:v',
     'copy',
-    'trim' + str(timecode) + video_fn
+    output_path
     ]
     subprocess.run(args)
 
 def collate(dir):
-    offset = align(dir)
-    print(str(offset))
+    offsets = align(dir)
+    print(str(offsets))
+
     os.mkdir(dir + '/trim')
-    contents = [f for f in os.listdir(dir) if (os.path.isfile(dir + '/' + f) and f != '.DS_Store')]
-    print("HELLOOOOO")
+    largest_offset = 0
+
+    for fn in offsets.keys():
+        if offsets[fn] > largest_offset:
+            largest_offset = offsets[fn]
+
+    contents = [dir + '/' + f for f in os.listdir(dir) if (os.path.isfile(dir + '/' + f) and f != '.DS_Store')]
+    print("HELLOLHELLLO")
     print(contents)
+
+    print("BYEBYE")
+    for c in contents:
+        fn = c.split('/')[-1]
+        trim_timecode = largest_offset - offsets[fn]
+        front_trim(c, dir + '/trim/' + fn, trim_timecode)
+
+
+    print("HELLOOOOO")
 
 if __name__ == "__main__":
     collate(sys.argv[1])
