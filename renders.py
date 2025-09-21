@@ -64,3 +64,28 @@ def av_map(video_path, audio_path, output_path):
         output_path
     ]
     subprocess.run(args)
+
+def apple_codec(video_path, output_path):
+    args = [
+        'ffmpeg',
+        '-i',
+        video_path,
+        '-pix_fmt',
+        'yuv420p',
+        output_path
+    ]
+    subprocess.run(args)
+
+def square_crop(hstack_video_path, output_path):
+    args = [
+        'ffmpeg',
+        '-i',
+        hstack_video_path,
+        '-vf',
+        'crop=in_w-240:in_h',
+        '-c:a',
+        'copy',
+        output_path
+    ]
+    subprocess.run(args)
+
