@@ -89,3 +89,12 @@ def square_crop(hstack_video_path, output_path):
     ]
     subprocess.run(args)
 
+def get_duration(av_path):
+    args = [
+        'ffprobe -i ' + str(av_path) + 
+        ' -show_entries format=duration -v quiet -of csv="p=0"',
+    ]
+    result = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
+    return float(str(result.stdout)[2:-4])
+
+

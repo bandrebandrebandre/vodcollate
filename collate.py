@@ -68,10 +68,23 @@ def collate(dir):
         if len(wav_fps) == 1:
             av_map(dir + '/crop/square.mov', wav_fps[0], dir + '/av_map/square_mix_only.mov')
         av_map(dir + '/crop/square.mov',  dir + '/trim/syncced_total.wav', dir + '/av_map/square_total_audio.mov')
+    except FileExistsError:
+        pass
 
+    try:
+        print("CONCAT")
+        os.mkdir(dir + '/concat')
+        video_durations = {}
+        for mov_fp in mov_fps:
+            video_durations[mov_fp] = get_duration(mov_fp)
+        print("DURATIONS " + str(video_durations))
+
+        #with open('concat_demux.txt', 'a') as demux_file:
+            #demux_file.write(mov_fp)
 
     except FileExistsError:
         pass
+
 
 if __name__ == "__main__":
     collate(sys.argv[1])
