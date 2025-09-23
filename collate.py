@@ -2,7 +2,7 @@ import audalign as ad
 import sys
 import os
 from renders import *
-
+import numpy as np
 
 def collate(dir):
 
@@ -74,13 +74,29 @@ def collate(dir):
     try:
         print("CONCAT")
         os.mkdir(dir + '/concat')
-        video_durations = {}
-        for mov_fp in mov_fps:
-            video_durations[mov_fp] = get_duration(mov_fp)
-        print("DURATIONS " + str(video_durations))
+        video_duration = get_duration(dir + '/trim/' + mov_fps[0].split('/')[-1])
+        print("DURATION " + str(video_duration))
 
-        #with open('concat_demux.txt', 'a') as demux_file:
-            #demux_file.write(mov_fp)
+        trimmed_contents = [dir + '/' + f for f in os.listdir(dir + '/trim') if (os.path.isfile(dir + '/trim/' + f) and f != '.DS_Store')]
+        print('TrIMMED CONTENTS ' + str(trimmed_contents))
+
+        t_mov_fps, t_wav_fps = [], []
+        for fp in trimmed_contents:
+            if fp.split('.')[-1].lower() == 'mov':
+                t_mov_fps.append(fp)
+            if fp.split('.')[-1].lower() == 'wav':
+                t_wav_fps.append(fp)
+
+        cut_duration = .25
+
+        with open('concat_demux.txt', 'a') as demux_file:
+            for itr in np.arange(0, video_duration, cut_duration * len(t_mov_fps)):
+                loop_itr = itr
+                for fp in t_mov_fps:
+                    demux_file.write(fp + '\n')
+                    demux_file.write('inpoint ' + str(loop_itr) + '\n')
+                    demux_file.write('outpoint ' + str(loop_itr + cut_duration) + '\n')
+                    loop_itr = loop_itr + cut_duration
 
     except FileExistsError:
         pass
