@@ -2,12 +2,12 @@ import subprocess
 import audalign as ad
 import os
 
-def align(dir): # should be at least two files
+def align(dir, destination): # should be at least two files
     fingerprint_rec = ad.FingerprintRecognizer()
     fingerprint_rec.config.set_accuracy(3)
     result = ad.align(\
         dir,
-        destination_path=dir + '/audalign',
+        destination_path=destination,
         recognizer=fingerprint_rec
     )
     fns = os.listdir(dir)
@@ -96,5 +96,36 @@ def get_duration(av_path):
     ]
     result = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
     return float(str(result.stdout)[2:-4])
+
+def concat(text_file, output_path):
+    args = [
+        'ffmpeg',
+        '-f',
+        'concat',
+        '-i',
+        text_file,
+        '-c',
+        'copy',
+        output_path
+    ]
+    subprocess.run(args)
+
+
+def trim(av_path, start, end, output_path):
+    args = [
+    'ffmpeg',
+    '-y',
+    '-ss',
+    str(start),
+    '-t',
+    str(end),
+    '-i',
+    av_path,
+    '-c:v',
+    'copy',
+    output_path
+    ]
+    subprocess.run(args)
+
 
 
