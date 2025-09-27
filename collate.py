@@ -6,18 +6,27 @@ import numpy as np
 
 def get_av_contents(dir):
     av = [dir + '/' + f for f in os.listdir(dir) if (os.path.isfile(dir + '/' + f) and f != '.DS_Store')]
-    mov_fps, wav_fps = [], []
+    mov_fps, wav_fps, ts_fps = [], [], []
     for fp in av:
         if fp.split('.')[-1].lower() == 'mov':
             mov_fps.append(fp)
         if fp.split('.')[-1].lower() == 'wav':
             wav_fps.append(fp)
-    return av, mov_fps, wav_fps
+        if fp.split('.')[-1].lower() == 'ts':
+            ts_fps.append(fp)
+    return av, mov_fps, wav_fps, ts_fps
+
+def four_pad(number):
+    result = str(number)
+    pad = len(str(number).split('.')[0])
+    for itr in range(pad, 4):
+        result = '0' + result
+    return result
 
 
 def collate(dir):
 
-    contents, mov_fps, wav_fps = get_av_contents(dir)
+    contents, mov_fps, wav_fps, ts_fps= get_av_contents(dir)
 
     try:
         os.mkdir(dir + '/collate')
@@ -43,7 +52,7 @@ def collate(dir):
     except FileExistsError:
         pass
 
-    trimmed_contents, t_mov_fps, t_wav_fps = get_av_contents(dir + '/collate/trim')
+    trimmed_contents, t_mov_fps, t_wav_fps, ts_fps = get_av_contents(dir + '/collate/trim')
 
     try:
         print("APPLE CODEC")
@@ -57,7 +66,7 @@ def collate(dir):
 
 def hstack(dir):
 
-    cont, mov_fps, wav_fps = get_av_contents(dir + '/collate/apple_codec')
+    cont, mov_fps, wav_fps, ts_fps = get_av_contents(dir + '/collate/apple_codec')
     try:
         print('HSTACK')
         os.mkdir(dir + '/hstack')
@@ -78,8 +87,9 @@ def hstack(dir):
     try:
         print("AV_MAP")
         os.mkdir(dir + '/hstack/av_map')
-        if len(wav_fps) == 1:
-            av_map(dir + '/hstack/crop/square.mov', wav_fps[0], dir + '/hstack/av_map/square_mix_only.mov')
+        c, m, dir_wav, ts_fps = get_av_contents(dir)
+        if len(dir_wav) == 1:
+            av_map(dir + '/hstack/crop/square.mov', dir_wav[0], dir + '/hstack/av_map/square_mix_only.mov')
         av_map(dir + '/hstack/crop/square.mov',  dir + '/collate/trim/syncced_total.wav', dir + '/hstack/av_map/square_total_audio.mov')
     except FileExistsError:
         pass
@@ -90,33 +100,48 @@ def concat(dir):
     try:
         print("CONCAT")
         os.mkdir(dir + '/concat')
-        contents, mov_fps, wav_fps = get_av_contents(dir + '/collate/apple_codec')
+        contents, mov_fps, wav_fps, ts_fps = get_av_contents(dir + '/collate/apple_codec')
 
-    except FileExistsError:
-        pass
+        video_duration = get_duration(mov_fps[0])
+        print("DURATION " + str(video_duration))
 
-    video_duration = get_duration(mov_fps[0])
-    print("DURATION " + str(video_duration))
-
-    try:
         print("CONCAT")
         os.mkdir(dir + '/concat/snippets')
+        os.mkdir(dir + '/concat/snippets/movs')
+        os.mkdir(dir + '/concat/snippets/mpegs')
 
-        cut_duration = 2
-        for itr in np.arange(0, video_duration, cut_duration * len(mov_fps)):
+        cut_duration = 1
+        concat_queue = []
+        for itr in np.arange(0, video_duration - (cut_duration * 6), cut_duration * len(mov_fps)):
             loop_itr = itr
-            snippet_fps = []
             for fp in mov_fps:
-                snippet_fps.append(dir + '/concat/snippets/' + fp.split('/')[-1] + str(loop_itr))
-                trim(fp, loop_itr, loop_itr + cut_duration, snippet_fps[-1])
+                mov_snip = dir + '/concat/snippets/movs/' + str(four_pad(loop_itr)) + '-' + fp.split('/')[-1]
+                trim(fp, loop_itr, cut_duration, mov_snip)
+                ts_snip =  dir + '/concat/snippets/mpegs/' + str(four_pad(loop_itr)) + '-' + fp.split('/')[-1]
+                make_ts(mov_snip, ts_snip)
                 loop_itr = loop_itr + cut_duration
-                if len(snippet_fps) != 1:
-                    concat(snippet_fps[-2], snippet_fps[-1])
+                concat_queue.append(ts_snip + '.ts')
 
+        concat_video(sorted(concat_queue), dir + '/concat/concat.ts')
+    except FileExistsError:
+        pass
+
+
+    try:
+        os.mkdir(dir + '/concat/codec')
+        apple_codec(dir + '/concat/concat.ts', dir + '/concat/codec/concat.mov')
 
     except FileExistsError:
         pass
 
+
+    try:
+        os.mkdir(dir + '/concat/av_map')
+        contents, mov_fps, wav_fps, ts_fps = get_av_contents(dir + '/collate/trim')
+        for fp in wav_fps:
+            av_map(dir + '/concat/codec/concat.mov', fp, dir + '/concat/av_map/' + fp.split('/')[-1].split('.')[-2] + '.mov')
+    except FileExistsError:
+        pass
 
 
 if __name__ == "__main__":

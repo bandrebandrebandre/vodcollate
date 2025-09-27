@@ -32,7 +32,6 @@ def front_trim(video_path, output_path, timecode):
     ]
     subprocess.run(args)
 
-
 def run_hstack(video_path1, video_path2, output_path):
     args = [
         'ffmpeg',
@@ -84,7 +83,7 @@ def square_crop(hstack_video_path, output_path):
         '-vf',
         'crop=in_w-240:in_h',
         '-c:a',
-        'copy',
+        'copy', 
         output_path
     ]
     subprocess.run(args)
@@ -97,13 +96,22 @@ def get_duration(av_path):
     result = subprocess.run(args, shell=True, stdout=subprocess.PIPE)
     return float(str(result.stdout)[2:-4])
 
-def concat(text_file, output_path):
+def concat_video(file_list, output_path):
+
+    #ffmpeg -f data -i "concat:input1.ts|input2.ts|input3.ts" -map 0 -c copy -f data output.ts
+
+    string_arg = 'concat:'
+    for file in file_list:
+        string_arg = string_arg + file
+        if file != file_list[-1]:
+            string_arg = string_arg + '|'
+    print('STRING_ARG: ' + string_arg)
+
     args = [
         'ffmpeg',
-        '-f',
-        'concat',
+        '-y',
         '-i',
-        text_file,
+        string_arg,
         '-c',
         'copy',
         output_path
@@ -111,21 +119,30 @@ def concat(text_file, output_path):
     subprocess.run(args)
 
 
-def trim(av_path, start, end, output_path):
+def trim(av_path, start, duration, output_path):
     args = [
-    'ffmpeg',
-    '-y',
-    '-ss',
-    str(start),
-    '-t',
-    str(end),
-    '-i',
-    av_path,
-    '-c:v',
-    'copy',
-    output_path
+        'ffmpeg',
+        '-y',
+        '-ss',
+        str(start),
+        '-i',
+        av_path,
+        '-t',
+        str(duration),
+        output_path
     ]
     subprocess.run(args)
 
+
+def make_ts(video_path, output_path):
+    args =[
+        'ffmpeg',
+        '-i',
+        video_path,
+        '-c',
+        'copy',
+        output_path + '.ts'
+    ]
+    subprocess.run(args)
 
 
